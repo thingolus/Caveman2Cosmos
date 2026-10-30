@@ -2,6 +2,7 @@
 // globals.cpp
 //
 #include "CvGameCoreDLL.h"
+#include "TurnLabNegativeRoute.h"
 #include "CvBuildingInfo.h"
 #include "CvGameAI.h"
 #include "CvGlobals.h"
@@ -749,6 +750,7 @@ CvModLoadControlInfo& cvInternalGlobals::getModLoadControlInfos(int iIndex) cons
 
 void cvInternalGlobals::updateReplacements()
 {
+	TL_NEG_ROUTE_MUTATION(turnLabRouteMutation);
 //ReplacementStep
 	m_WorldInfoReplacements.updateReplacements(m_paWorldInfo);
 	m_UnitInfoReplacements.updateReplacements(m_paUnitInfo);
@@ -2682,6 +2684,7 @@ const char* cvInternalGlobals::alternateProfileSampleName() const
 
 void cvInternalGlobals::deleteInfoArrays()
 {
+	TL_NEG_ROUTE_MUTATION(turnLabRouteMutation);
 	algo::for_each(m_aInfoVectors, bind(deleteInfoArray, _1));
 
 	m_paModLoadControlVector.clear();
@@ -2929,6 +2932,7 @@ void cvInternalGlobals::copyNonDefaultDelayedResolution(int* pTypeSelf, int* pTy
 
 void cvInternalGlobals::resolveDelayedResolution()
 {
+	TL_NEG_ROUTE_MUTATION(turnLabRouteMutation);
 	PROFILE_EXTRA_FUNC();
 	for (DelayedResolutionMap::iterator it = m_delayedResolutionMap.begin(); it != m_delayedResolutionMap.end(); ++it)
 	{

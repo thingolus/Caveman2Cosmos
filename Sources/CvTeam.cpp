@@ -4,6 +4,7 @@
 #include "FProfiler.h"
 
 #include "CvGameCoreDLL.h"
+#include "TurnLabNegativeRoute.h"
 #include "CvArea.h"
 #include "CvBuildingInfo.h"
 #include "CvBonusInfo.h"
@@ -158,6 +159,7 @@ void CvTeam::init(TeamTypes eID)
 
 void CvTeam::uninit()
 {
+	TL_NEG_ROUTE_MUTATION(turnLabRouteMutation);
 	m_vNoTradeTech.clear();
 	m_unitCount.clear();
 
@@ -186,6 +188,7 @@ void CvTeam::uninit()
 // Initializes data members that are serialized.
 void CvTeam::reset(TeamTypes eID, bool bConstructorCall)
 {
+	TL_NEG_ROUTE_MUTATION(turnLabRouteMutation);
 	PROFILE_EXTRA_FUNC();
 	int iI, iJ;
 
@@ -5147,6 +5150,7 @@ void CvTeam::announceTechToPlayers(TechTypes eIndex, bool bPartial)
 
 void CvTeam::setHasTech(TechTypes eTech, bool bNewValue, PlayerTypes ePlayer, bool bFirst, bool bAnnounce)
 {
+	TL_NEG_ROUTE_MUTATION(turnLabRouteMutation);
 	PROFILE_FUNC();
 
 	if (eTech == NO_TECH)
@@ -6505,6 +6509,7 @@ bool CvTeam::isTurnActive() const
 
 void CvTeam::read(FDataStreamBase* pStream)
 {
+	TL_NEG_ROUTE_MUTATION(turnLabRouteMutation);
 	PROFILE_EXTRA_FUNC();
 	CvTaggedSaveFormatWrapper& wrapper = CvTaggedSaveFormatWrapper::getSaveFormatWrapper();
 

@@ -7,6 +7,7 @@
 //  Copyright (c) 2003 Firaxis Games, Inc. All rights reserved.
 //------------------------------------------------------------------------------------------------
 #include "CvGameCoreDLL.h"
+#include "TurnLabNegativeRoute.h"
 #include "CvArtFileMgr.h"
 #include "CvBuildingInfo.h"
 #include "CvHeritageInfo.h"
@@ -12331,6 +12332,7 @@ bool CvBuildInfo::isCategory(int i) const
 
 bool CvBuildInfo::read(CvXMLLoadUtility* pXML)
 {
+	TL_NEG_ROUTE_DEFINITION_MUTATION(turnLabRouteMutation);
 	PROFILE_EXTRA_FUNC();
 	CvString szTextVal;
 	CvString szTextVal2;
@@ -12428,6 +12430,7 @@ bool CvBuildInfo::read(CvXMLLoadUtility* pXML)
 
 void CvBuildInfo::copyNonDefaults(const CvBuildInfo* pClassInfo)
 {
+	TL_NEG_ROUTE_DEFINITION_MUTATION(turnLabRouteMutation);
 	PROFILE_EXTRA_FUNC();
 	bool bDefault = false;
 	int iDefault = 0;
@@ -12875,6 +12878,7 @@ const std::vector<BonusTypes>& CvRouteInfo::getPrereqOrBonuses() const
 
 bool CvRouteInfo::read(CvXMLLoadUtility* pXML)
 {
+	TL_NEG_ROUTE_DEFINITION_MUTATION(turnLabRouteMutation);
 	CvString szTextVal;
 	//shouldHaveType = true;
 	if (!CvInfoBase::read(pXML))
@@ -12925,6 +12929,7 @@ bool CvRouteInfo::read(CvXMLLoadUtility* pXML)
 
 void CvRouteInfo::copyNonDefaults(const CvRouteInfo* pClassInfo)
 {
+	TL_NEG_ROUTE_DEFINITION_MUTATION(turnLabRouteMutation);
 	PROFILE_EXTRA_FUNC();
 	int iDefault = 0;
 	int iTextDefault = -1;  //all integers which are TEXT_KEYS in the xml are -1 by default

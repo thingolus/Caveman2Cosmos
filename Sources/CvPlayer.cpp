@@ -4,6 +4,7 @@
 #include "FProfiler.h"
 
 #include "CvGameCoreDLL.h"
+#include "TurnLabNegativeRoute.h"
 #include "CvArea.h"
 #include "CvArtFileMgr.h"
 #include "CvBuildingInfo.h"
@@ -143,6 +144,59 @@ private:
 
 //Disable this passed in initialization list warning, as it is only stored in the constructor of CvBuildingList and not used
 #pragma warning( disable : 4355 )
+
+#if TURNLAB_NEGATIVE_GENERAL_ROUTE
+namespace
+{
+    struct TurnLabNegativeEntry { unsigned int generation; int team; };
+    TurnLabNegativeEntry g_turnLabNegatives[MAX_PLAYERS];
+    unsigned int g_turnLabNegativeGeneration = 1;
+    unsigned int g_turnLabNegativeMutationDepth = 0;
+    bool g_turnLabNegativeDisabled = false;
+}
+namespace TurnLabNegativeRoute
+{
+    unsigned int stableGeneration()
+    {
+        return !g_turnLabNegativeDisabled && g_turnLabNegativeMutationDepth == 0
+            ? g_turnLabNegativeGeneration : 0;
+    }
+    bool hit(int player, int team, unsigned int generation)
+    {
+        return generation != 0 && generation == stableGeneration()
+            && player >= 0 && player < MAX_PLAYERS && team >= 0 && team < MAX_TEAMS
+            && g_turnLabNegatives[player].generation == generation
+            && g_turnLabNegatives[player].team == team;
+    }
+    void remember(int player, int team, unsigned int generation)
+    {
+        if (generation != 0 && generation == stableGeneration()
+            && player >= 0 && player < MAX_PLAYERS && team >= 0 && team < MAX_TEAMS)
+        {
+            g_turnLabNegatives[player].team = team;
+            g_turnLabNegatives[player].generation = generation;
+        }
+    }
+    void disableForLiveDefinitionEdit() { g_turnLabNegativeDisabled = true; }
+    bool beginMutation()
+    {
+        if (g_turnLabNegativeDisabled) return false;
+        if (g_turnLabNegativeGeneration == 0xffffffffU || g_turnLabNegativeMutationDepth == 0xffffffffU)
+        {
+            g_turnLabNegativeDisabled = true;
+            return false;
+        }
+        ++g_turnLabNegativeGeneration;
+        ++g_turnLabNegativeMutationDepth;
+        return true;
+    }
+    void endMutation()
+    {
+        if (g_turnLabNegativeMutationDepth != 0) --g_turnLabNegativeMutationDepth;
+        else g_turnLabNegativeDisabled = true;
+    }
+}
+#endif
 
 CvPlayer::CvPlayer()
 : m_GameObject(this),
@@ -7894,6 +7948,16 @@ bool CvPlayer::isRouteValid(RouteTypes eRoute, BuildTypes eRouteBuild, const CvP
 RouteTypes CvPlayer::getBestRoute(const CvPlot* pPlot, bool bConnect, const CvUnit* pBuilder) const
 {
 	PROFILE_FUNC();
+#if TURNLAB_NEGATIVE_GENERAL_ROUTE
+    const bool routeCacheEligible = pPlot == NULL && bConnect && pBuilder == NULL && m_eBestRoute == NO_ROUTE && GC.getGamePointer() != NULL && GC.getGame().isFinalInitialized();
+    const int routeCachePlayer = routeCacheEligible ? getID() : NO_PLAYER;
+    const int routeCacheTeam = routeCacheEligible ? getTeam() : NO_TEAM;
+    const unsigned int routeCacheGeneration = routeCacheEligible ? TurnLabNegativeRoute::stableGeneration() : 0;
+    if (routeCacheEligible && TurnLabNegativeRoute::hit(routeCachePlayer, routeCacheTeam, routeCacheGeneration))
+    {
+        return NO_ROUTE;
+    }
+#endif
 
 	// Save best route type per player each turn, then only check others if can't do best.
 	if (m_eBestRoute == NO_ROUTE)
@@ -7913,7 +7977,16 @@ RouteTypes CvPlayer::getBestRoute(const CvPlot* pPlot, bool bConnect, const CvUn
 			return m_eBestRoute;
 		}  */
 	}
+#if TURNLAB_NEGATIVE_GENERAL_ROUTE
+    const RouteTypes routeResult = getBestRouteInternal(pPlot, bConnect, pBuilder);
+    if (routeCacheEligible && routeResult == NO_ROUTE && m_eBestRoute == NO_ROUTE)
+    {
+        TurnLabNegativeRoute::remember(routeCachePlayer, routeCacheTeam, routeCacheGeneration);
+    }
+    return routeResult;
+#else
 	return getBestRouteInternal(pPlot, bConnect, pBuilder);
+#endif
 }
 
 // This maybe should be in CvPlot from how often it calls pPlot...? Or investigate, use getRouteYieldChangesArray if applicable
@@ -12998,6 +13071,7 @@ TeamTypes CvPlayer::getTeam() const
 
 void CvPlayer::updateTeamType()
 {
+	TL_NEG_ROUTE_MUTATION(turnLabRouteMutation);
 	if(getID() == NO_PLAYER)
 	{
 		m_eTeamType = NO_TEAM;
